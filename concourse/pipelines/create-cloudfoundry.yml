@@ -376,7 +376,8 @@ resources:
     type: git
     source:
       uri: https://github.com/alphagov/paas-admin
-      tag_filter: v0.59.0
+      branch: master
+      commit_verification_keys: ((gpg_public_keys))
 
   - name: prometheus-vars-store
     type: s3-iam
@@ -2660,6 +2661,30 @@ jobs:
     plan:
       - get: paas-admin
         trigger: true
+
+      - task: test
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: node
+              tag: 8-alpine
+          inputs:
+            - name: paas-admin
+          params:
+            NODE_ENV: development
+          run:
+            path: sh
+            dir: paas-admin
+            args:
+              - -e
+              - -u
+              - -c
+              - |
+                npm install
+                npm run build
+                npm test
 
       - aggregate:
         - get: paas-cf
